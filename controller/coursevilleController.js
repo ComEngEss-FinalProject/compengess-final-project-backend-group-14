@@ -105,8 +105,14 @@ exports.getProfileInformation = (req, res) => {
   }
 };
 
-exports.getAssignments = async (req, res) => {
+exports.getAllAssignments = async (req, res) => {
   try {
+    const filter_year = req.query.year || "";
+    const filter_semester = req.query.semester || "";
+    
+    console.log("filter_year: " + filter_year)
+    console.log("filter_semester: " + filter_semester)
+
     const courseOptions = {
       headers: {
         Authorization: `Bearer ${req.session.token.access_token}`,
@@ -115,33 +121,95 @@ exports.getAssignments = async (req, res) => {
     const courseReq = await axios.get("https://www.mycourseville.com/api/v1/public/get/user/courses?detail=1", courseOptions);
 
     let courses_cv_cid = [];
-
-    for (const element of courseReq.data.data.student) {
-      const course = element;
-      const course_cv_cid = course.cv_cid;
-      courses_cv_cid.push(course_cv_cid);
-    }
-
     let assignments = [];
-
-    for (let i = 0; i < courses_cv_cid.length; i++) {
-      const course_cv_cid = courses_cv_cid[i];
-      const assignmentReq = await axios.get(`https://www.mycourseville.com/api/v1/public/get/course/assignments?cv_cid=${course_cv_cid}&detail=1`, courseOptions);
+    if (filter_year == "" && filter_semester == "") {
+      console.log("filter_year == '' && filter_semester == ''")
+      for (const element of courseReq.data.data.student) {
+        courses_cv_cid.push(element);
+      }
+    } else if (filter_semester == "") {
+      console.log("filter_semester == ''")
+      for (const element of courseReq.data.data.student) {
+        if (element.year == filter_year) {
+          courses_cv_cid.push(element);
+        }
+      }
+    } else if (filter_year == "") {
+      console.log("filter_year == ''")
+      for (const element of courseReq.data.data.student) {
+        // console.log(element.semester + " " + filter_semester)
+        // console.log(element.semester == filter_semester)
+        if (element.semester == filter_semester) {
+          courses_cv_cid.push(element);
+        }
+      }
+    } else {
+      console.log("filter_year != '' && filter_semester != ''")
+      for (const element of courseReq.data.data.student) {
+        if (element.year == filter_year && element.semester == filter_semester) {
+          courses_cv_cid.push(element);
+        }
+      }
+    }
+    
+    for (const element of courses_cv_cid) {
+      const assignmentReq = await axios.get(`https://www.mycourseville.com/api/v1/public/get/course/assignments?cv_cid=${element.cv_cid}&detail=1`, courseOptions);
       const assignment1 = assignmentReq.data.data;
 
       const informationOfAssignment = {
-          course_cv_cid: courses_cv_cid[i],
-          title: courseReq.data.data.student[i].title,
-          semester: courseReq.data.data.student[i].semester,
-          year: courseReq.data.data.student[i].year,
-          course_icon: courseReq.data.data.student[i].course_icon,
-          assignment_lenght: assignment1.length,
-          assignment: assignment1,
+        course_cv_cid: element.cv_cid,
+        title: element.title,
+        semester: element.semester,
+        year: element.year,
+        course_icon: element.course_icon,
+        assignment_lenght: assignment1.length,
+        assignment: assignment1,
       }
-
       assignments.push(informationOfAssignment);
     }
+    res.status(200).send(assignments);
 
+  } catch (error) {
+    res.status(401).send(error);
+    console.log(error);
+    console.log("Please logout, then login again.");
+  }
+};
+
+exports.getCourseAssignments = async (req, res) => {
+  try {
+    const cv_cid = req.params.cv_cid;
+    const courseOptions = {
+      headers: {
+        Authorization: `Bearer ${req.session.token.access_token}`,
+      },
+    };
+    const courseReq = await axios.get("https://www.mycourseville.com/api/v1/public/get/user/courses?detail=1", courseOptions);
+
+    let courses_cv_cid = [];
+    let assignments = [];
+    for (const element of courseReq.data.data.student) {
+      if (element.cv_cid == cv_cid) {
+        courses_cv_cid.push(element);
+        break;
+      }
+    }
+    
+    for (const element of courses_cv_cid) {
+      const assignmentReq = await axios.get(`https://www.mycourseville.com/api/v1/public/get/course/assignments?cv_cid=${element.cv_cid}&detail=1`, courseOptions);
+      const assignment1 = assignmentReq.data.data;
+
+      const informationOfAssignment = {
+        course_cv_cid: element.cv_cid,
+        title: element.title,
+        semester: element.semester,
+        year: element.year,
+        course_icon: element.course_icon,
+        assignment_lenght: assignment1.length,
+        assignment: assignment1,
+      }
+      assignments.push(informationOfAssignment);
+    }
     res.status(200).send(assignments);
 
   } catch (error) {
