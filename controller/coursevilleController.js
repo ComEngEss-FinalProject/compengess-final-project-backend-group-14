@@ -116,9 +116,8 @@ exports.getAssignments = async (req, res) => {
 
     let courses_cv_cid = [];
 
-    for (let i = 0; i < courseReq.data.data.student.length; i++) {
-      const course = courseReq.data.data.student[i];
-      // console.log(course)
+    for (const element of courseReq.data.data.student) {
+      const course = element;
       const course_cv_cid = course.cv_cid;
       courses_cv_cid.push(course_cv_cid);
     }
@@ -129,7 +128,6 @@ exports.getAssignments = async (req, res) => {
       const course_cv_cid = courses_cv_cid[i];
       const assignmentReq = await axios.get(`https://www.mycourseville.com/api/v1/public/get/course/assignments?cv_cid=${course_cv_cid}&detail=1`, courseOptions);
       const assignment1 = assignmentReq.data.data;
-      console.log(assignment1)
 
       const informationOfAssignment = {
           course_cv_cid: courses_cv_cid[i],

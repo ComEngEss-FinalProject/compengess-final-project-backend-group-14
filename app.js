@@ -31,6 +31,10 @@ app.use(session(sessionOptions));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+app.listen(process.env.backendIPAddress, () => {
+  console.log(`Server is running on port http://${process.env.backendIPAddress}`);
+});
+
 app.use("/courseville", coursevilleRoutes);
 app.get("/", (req, res) => {
   res.send("Congratulation. This server is successfully run.");
