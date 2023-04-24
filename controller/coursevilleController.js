@@ -7,6 +7,7 @@ const querystring = require("querystring");
 const redirect_uri = `http://${process.env.backendIPAddress}/courseville/access_token`;
 const authorization_url = `https://www.mycourseville.com/api/oauth/authorize?response_type=code&client_id=${process.env.client_id}&redirect_uri=${redirect_uri}`;
 const access_token_url = "https://www.mycourseville.com/api/oauth/access_token";
+const axios = require("axios");
 
 exports.authApp = (req, res) => {
   res.redirect(authorization_url);
@@ -104,27 +105,52 @@ exports.getProfileInformation = (req, res) => {
   }
 };
 
-// TODO #3.2: Send "GET" request to CV endpoint to get all courses that you enrolled
-exports.getCourses = (req, res) => {
-  // You should change the response below.
-  res.send("This route should get all courses that you enrolled.");
-  res.end();
-};
+exports.getAssignments = async (req, res) => {
+  try {
+    const courseOptions = {
+      headers: {
+        Authorization: `Bearer ${req.session.token.access_token}`,
+      },
+    };
+    const courseReq = await axios.get("https://www.mycourseville.com/api/v1/public/get/user/courses?detail=1", courseOptions);
 
-// TODO #3.4: Send "GET" request to CV endpoint to get all course assignments based on cv_cid
-exports.getCourseAssignments = (req, res) => {
-  const cv_cid = req.params.cv_cid;
-  // You should change the response below.
-  res.send("This route should get all course assignments based on cv_cid.");
-  res.end();
-};
+    let courses_cv_cid = [];
 
-// Outstanding #2
-exports.getAssignmentDetail = (req, res) => {
-  const itemid = req.params.item_id;
-  // You should change the response below.
-  res.send("This route should get assignment details based on item_id.");
-  res.end();
+    for (let i = 0; i < courseReq.data.data.student.length; i++) {
+      const course = courseReq.data.data.student[i];
+      // console.log(course)
+      const course_cv_cid = course.cv_cid;
+      courses_cv_cid.push(course_cv_cid);
+    }
+
+    let assignments = [];
+
+    for (let i = 0; i < courses_cv_cid.length; i++) {
+      const course_cv_cid = courses_cv_cid[i];
+      const assignmentReq = await axios.get(`https://www.mycourseville.com/api/v1/public/get/course/assignments?cv_cid=${course_cv_cid}&detail=1`, courseOptions);
+      const assignment1 = assignmentReq.data.data;
+      console.log(assignment1)
+
+      const informationOfAssignment = {
+          course_cv_cid: courses_cv_cid[i],
+          title: courseReq.data.data.student[i].title,
+          semester: courseReq.data.data.student[i].semester,
+          year: courseReq.data.data.student[i].year,
+          course_icon: courseReq.data.data.student[i].course_icon,
+          assignment_lenght: assignment1.length,
+          assignment: assignment1,
+      }
+
+      assignments.push(informationOfAssignment);
+    }
+
+    res.status(200).send(assignments);
+
+  } catch (error) {
+    res.status(401).send(error);
+    console.log(error);
+    console.log("Please logout, then login again.");
+  }
 };
 
 exports.logout = (req, res) => {
