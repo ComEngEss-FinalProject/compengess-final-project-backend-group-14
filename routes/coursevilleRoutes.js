@@ -15,6 +15,10 @@ router.get("/getAllAssignments", coursevilleController.getAllAssignments);
 //สำหรับดึงข้อมูลของ course ที่เลือก
 router.get("/getCourseAssignments/:cv_cid", coursevilleController.getCourseAssignments);
 
+router.post("/addAssignment", coursevilleController.addAssignment);
+router.get("/getAssignmentSent", coursevilleController.getAssignmentSent);
+router.get("/deleteAssignment", coursevilleController.deleteAssignment);
+
 router.get("/logout", coursevilleController.logout);
 
 module.exports = router;

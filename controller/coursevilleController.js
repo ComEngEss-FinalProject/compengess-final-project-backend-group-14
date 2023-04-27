@@ -9,6 +9,16 @@ const authorization_url = `https://www.mycourseville.com/api/oauth/authorize?res
 const access_token_url = "https://www.mycourseville.com/api/oauth/access_token";
 const axios = require("axios");
 
+const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
+const {
+  PutCommand,
+  DeleteCommand,
+  ScanCommand,
+  QueryCommand,
+  ExecuteStatementCommand,
+} = require("@aws-sdk/lib-dynamodb");
+const docClient = new DynamoDBClient({ regions: process.env.AWS_REGION });
+
 exports.authApp = (req, res) => {
   res.redirect(authorization_url);
 };
@@ -54,7 +64,7 @@ exports.accessToken = (req, res) => {
           console.log(req.session);
           if (token) {
             res.writeHead(302, {
-              Location: `http://${process.env.frontendIPAddress}/home.html`,
+              Location: `http://${process.env.frontendIPAddress}/index.html`,
             });
             res.end();
           }
@@ -81,7 +91,7 @@ exports.getProfileInformation = (req, res) => {
       },
     };
     const profileReq = https.request(
-      "https://www.mycourseville.com/api/v1/public/users/me",
+      "https://www.mycourseville.com/api/v1/public/get/user/info",
       profileOptions,
       (profileRes) => {
         let profileData = "";
@@ -89,7 +99,7 @@ exports.getProfileInformation = (req, res) => {
           profileData += chunk;
         });
         profileRes.on("end", () => {
-          const profile = JSON.parse(profileData);
+          const profile = JSON.parse(profileData).data;
           res.send(profile);
           res.end();
         });
@@ -162,7 +172,7 @@ exports.getAllAssignments = async (req, res) => {
         semester: element.semester,
         year: element.year,
         course_icon: element.course_icon,
-        assignment_lenght: assignment1.length,
+        assignment_length: assignment1.length,
         assignment: assignment1,
       }
       assignments.push(informationOfAssignment);
@@ -205,7 +215,7 @@ exports.getCourseAssignments = async (req, res) => {
         semester: element.semester,
         year: element.year,
         course_icon: element.course_icon,
-        assignment_lenght: assignment1.length,
+        assignment_length: assignment1.length,
         assignment: assignment1,
       }
       assignments.push(informationOfAssignment);
@@ -221,6 +231,55 @@ exports.getCourseAssignments = async (req, res) => {
 
 exports.logout = (req, res) => {
   req.session.destroy();
-  res.redirect(`http://${process.env.frontendIPAddress}/login.html`);
+  res.redirect(`http://${process.env.frontendIPAddress}/index.html`);
   res.end();
 };
+
+exports.getAssignmentSent = async (req, res) => {
+  const params = {
+    TableName: process.env.aws_sendStatus_table,
+  };
+  try {
+    const data = await docClient.send(new ScanCommand(params));
+    res.send(data.Items);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send(err);
+  }
+}
+
+exports.addAssignment = async (req, res) => {
+  const item = { ...req.body };
+  const params = {
+    TableName: process.env.aws_sendStatus_table,
+    Item: {
+      user_id: item.user_id,
+      assignment_id: item.assignment_id,
+    },
+  };
+
+  try {
+    const data = await docClient.send(new PutCommand(params));
+    res.send(data);
+  } catch (err) {
+    console.error(err);
+    res.send("This route should add an item in DynamoDB.");
+  }
+}
+exports.deleteAssignment = async (req, res) => {
+  const params = {
+    TableName: process.env.aws_sendStatus_table,
+    Key: {
+      user_id: req.body.user_id,
+      assignment_id: req.body.assignment_id,
+    },
+  };
+
+  try {
+    const data = await docClient.send(new DeleteCommand(params));
+    res.send(data);
+  } catch (err) {
+    console.error(err);
+    res.send("This route should delete an item in DynamoDB.");
+  }
+}
