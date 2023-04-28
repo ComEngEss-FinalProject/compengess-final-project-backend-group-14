@@ -1,3 +1,5 @@
+const axios = require("axios");
+
 module.exports = async(req, res, next) => {
     try {
         const profileOptions = {
@@ -9,7 +11,7 @@ module.exports = async(req, res, next) => {
         next();
     } catch (err) {
         console.log(err);
-        res.status(401).send("Don't have permission to access this page.");
+        res.status(401).send({error: "Don't have permission to access this page."});
     }
 
 }
