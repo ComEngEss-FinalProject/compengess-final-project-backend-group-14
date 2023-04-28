@@ -14,8 +14,6 @@ const {
   PutCommand,
   DeleteCommand,
   ScanCommand,
-  QueryCommand,
-  ExecuteStatementCommand,
 } = require("@aws-sdk/lib-dynamodb");
 const docClient = new DynamoDBClient({ regions: process.env.AWS_REGION });
 
