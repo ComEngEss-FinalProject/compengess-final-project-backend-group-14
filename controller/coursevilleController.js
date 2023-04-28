@@ -120,8 +120,8 @@ exports.getAllAssignments = async (req, res) => {
     const filter_year = req.query.year || "";
     const filter_semester = req.query.semester || "";
     
-    console.log("filter_year: " + filter_year)
-    console.log("filter_semester: " + filter_semester)
+    // console.log("filter_year: " + filter_year)
+    // console.log("filter_semester: " + filter_semester)
 
     const courseOptions = {
       headers: {
@@ -133,19 +133,19 @@ exports.getAllAssignments = async (req, res) => {
     let courses_cv_cid = [];
     let assignments = [];
     if (filter_year == "" && filter_semester == "") {
-      console.log("filter_year == '' && filter_semester == ''")
+      // console.log("filter_year == '' && filter_semester == ''")
       for (const element of courseReq.data.data.student) {
         courses_cv_cid.push(element);
       }
     } else if (filter_semester == "") {
-      console.log("filter_semester == ''")
+      // console.log("filter_semester == ''")
       for (const element of courseReq.data.data.student) {
         if (element.year == filter_year) {
           courses_cv_cid.push(element);
         }
       }
     } else if (filter_year == "") {
-      console.log("filter_year == ''")
+      // console.log("filter_year == ''")
       for (const element of courseReq.data.data.student) {
         // console.log(element.semester + " " + filter_semester)
         // console.log(element.semester == filter_semester)
@@ -154,7 +154,7 @@ exports.getAllAssignments = async (req, res) => {
         }
       }
     } else {
-      console.log("filter_year != '' && filter_semester != ''")
+      // console.log("filter_year != '' && filter_semester != ''")
       for (const element of courseReq.data.data.student) {
         if (element.year == filter_year && element.semester == filter_semester) {
           courses_cv_cid.push(element);
@@ -231,7 +231,7 @@ exports.getCourseAssignments = async (req, res) => {
 
 exports.logout = (req, res) => {
   req.session.destroy();
-  res.redirect(`http://${process.env.frontendIPAddress}/index.html`);
+  res.redirect(`http://${process.env.frontendIPAddress}/login.html`);
   res.end();
 };
 
@@ -250,6 +250,7 @@ exports.getAssignmentSent = async (req, res) => {
 
 exports.addAssignment = async (req, res) => {
   const item = { ...req.body };
+
   const params = {
     TableName: process.env.aws_sendStatus_table,
     Item: {

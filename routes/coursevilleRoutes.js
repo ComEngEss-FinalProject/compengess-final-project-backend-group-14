@@ -17,7 +17,7 @@ router.get("/getCourseAssignments/:cv_cid", coursevilleController.getCourseAssig
 
 router.post("/addAssignment", coursevilleController.addAssignment);
 router.get("/getAssignmentSent", coursevilleController.getAssignmentSent);
-router.get("/deleteAssignment", coursevilleController.deleteAssignment);
+router.delete("/deleteAssignment", coursevilleController.deleteAssignment);
 
 router.get("/logout", coursevilleController.logout);
 
